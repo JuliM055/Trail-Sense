@@ -1,9 +1,11 @@
 package com.kylecorry.trail_sense.astronomy.domain
 
+import com.kylecorry.trail_sense.shared.domain.Coordinate
+import com.kylecorry.trail_sense.shared.toZonedDateTime
 import org.junit.Test
 
 import org.junit.Assert.*
-import java.time.Duration
+import java.time.*
 
 class AstronomyMathTest {
 
@@ -20,7 +22,7 @@ class AstronomyMathTest {
 
     @Test
     fun hourToAngle(){
-        assertEquals(2.4213389045, AstronomyMath.timeToAngle(9, 14, 55.8), 0.00000001)
+        assertEquals(Math.toDegrees(2.4213389045), AstronomyMath.timeToAngle(9, 14, 55.8), 0.00000001)
     }
 
     @Test
@@ -47,5 +49,12 @@ class AstronomyMathTest {
     fun canInterpolate(){
         assertTrue(AstronomyMath.canInterpolate(-1693.4, 406.3, 2303.2, 203.0))
         assertFalse(AstronomyMath.canInterpolate(-1693.4, 406.3, 2303.2, 201.0))
+    }
+
+    @Test
+    fun canCalculateRiseSetTimes(){
+        val declination = 18.64229
+        val rightAscension = 42.59324
+        val times = AstronomyMath.riseSetTransitTimes(Coordinate(42.3333, -71.0833), ZonedDateTime.of(LocalDate.of(1988, Month.MARCH, 20), LocalTime.MIN, ZoneId.systemDefault()), -0.5667, declination, rightAscension)
     }
 }

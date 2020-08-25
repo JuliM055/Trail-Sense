@@ -94,7 +94,7 @@ class AstronomicalAltitudeCalculator {
         return AstroAltitude(time, Math.toDegrees(calculateAltitude(H, phi, c.declination)).toFloat())
     }
 
-    private fun getSunCoordinates(days: Double): AstroCoordinates {
+    fun getSunCoordinates(days: Double): AstroCoordinates {
         val M = (357.5291 + 0.98560028 * days).toRadians()
         val L = getEclipticLongitude(M)
 
@@ -152,13 +152,13 @@ class AstronomicalAltitudeCalculator {
         ) * sin(l))
     }
 
-    private data class AstroCoordinates(val ra: Double, val declination: Double)
+    data class AstroCoordinates(val ra: Double, val declination: Double)
 
     companion object {
         private val e = Math.toRadians(23.4397)
-        private const val J2000 = 2451545.0
-        private const val J1970 = 2440588.0
-        private const val dayS = 60 * 60 * 24.0
+        const val J2000 = 2451545.0
+        const val J1970 = 2440588.0
+        const val dayS = 60 * 60 * 24.0
     }
 
 }

@@ -19,35 +19,37 @@ package com.kylecorry.trail_sense.astronomy.domain.sun
 
 import android.text.format.DateUtils
 import com.kylecorry.trail_sense.shared.domain.Coordinate
+import com.kylecorry.trail_sense.shared.math.sinDegrees
+import com.kylecorry.trail_sense.shared.toEpochMillis
 import com.kylecorry.trail_sense.shared.toZonedDateTime
 import java.time.*
 import kotlin.math.*
 
-abstract class BaseSunTimesCalculator(private val sunAngleDeg: Float) :
+abstract class BaseSunTimesCalculator(private val sunAngleDeg: Double) :
     ISunTimesCalculator {
 
     override fun calculate(coordinate: Coordinate, date: LocalDate): SunTimes {
-        val current = date.atTime(12, 0, 0)
+        val current = date.atTime(12, 0, 0).toEpochMillis()
 
-        val daysSince2000 = Duration.between(JANUARY_1_2000, current).toDays()
+        val daysSince2000 = (current - UTC_2000) / DateUtils.DAY_IN_MILLIS.toDouble() //Duration.between(JANUARY_1_2000, current).toDays()
         val meanAnomaly = 6.240059968f + daysSince2000 * 0.01720197f
         val trueAnomaly =
-            meanAnomaly.toDouble() + C1 * sin(meanAnomaly.toDouble()) + C2 * sin((2 * meanAnomaly).toDouble()) + C3 * sin(
-                (3 * meanAnomaly).toDouble()
+            meanAnomaly + C1 * sin(meanAnomaly) + C2 * sin((2 * meanAnomaly)) + C3 * sin(
+                (3 * meanAnomaly)
             )
         // ecliptic longitude
         val solarLng = trueAnomaly + 1.796593063 + Math.PI
         // solar transit in days since 2000
         val arcLongitude = -coordinate.longitude / 360
-        val n = (daysSince2000.toDouble() - J0.toDouble() - arcLongitude).roundToLong().toFloat()
+        val n = round(daysSince2000 - J0 - arcLongitude)
         val solarTransitJ2000 =
-            (n.toDouble() + J0.toDouble() + arcLongitude + 0.0053 * sin(meanAnomaly.toDouble())
+            (n + J0 + arcLongitude + 0.0053 * sin(meanAnomaly)
                     + -0.0069 * sin(2 * solarLng))
         // declination of sun
-        val solarDec = asin(sin(solarLng) * sin(OBLIQUITY.toDouble()))
+        val solarDec = asin(sin(solarLng) * sin(OBLIQUITY))
         val latRad = Math.toRadians(coordinate.latitude)
         val cosHourAngle =
-            (sin(Math.toRadians(sunAngleDeg.toDouble())) - sin(latRad) * sin(
+            (sinDegrees(sunAngleDeg) - sin(latRad) * sin(
                 solarDec
             )) / (cos(latRad) * cos(solarDec))
         // The day or night never ends for the given date and location, if this value is out of
@@ -58,16 +60,12 @@ abstract class BaseSunTimesCalculator(private val sunAngleDeg: Float) :
         } else if (cosHourAngle <= -1) {
             return SunTimes.alwaysUp()
         }
-        val hourAngle = (acos(cosHourAngle) / (2 * Math.PI)).toFloat()
+        val hourAngle = acos(cosHourAngle) / (2 * Math.PI)
         val up = Instant.ofEpochMilli(
-            ((solarTransitJ2000 - hourAngle) * DateUtils.DAY_IN_MILLIS).roundToLong() + JANUARY_1_2000.toEpochSecond(
-                ZoneOffset.UTC
-            ) * 1000
+            ((solarTransitJ2000 - hourAngle) * DateUtils.DAY_IN_MILLIS).roundToLong() + UTC_2000
         )
         val down = Instant.ofEpochMilli(
-            ((solarTransitJ2000 + hourAngle) * DateUtils.DAY_IN_MILLIS).roundToLong() + JANUARY_1_2000.toEpochSecond(
-                ZoneOffset.UTC
-            ) * 1000
+            ((solarTransitJ2000 + hourAngle) * DateUtils.DAY_IN_MILLIS).roundToLong() + UTC_2000
         )
 
         val upTime = up.toZonedDateTime().toLocalDateTime()
@@ -77,11 +75,12 @@ abstract class BaseSunTimesCalculator(private val sunAngleDeg: Float) :
     }
 
     companion object {
-        private const val J0 = 0.0009f
-        private const val C1 = 0.0334196f
-        private const val C2 = 0.000349066f
-        private const val C3 = 0.000005236f
-        private const val OBLIQUITY = 0.40927971f
+        private const val J0 = 0.0009
+        private const val C1 = 0.0334196
+        private const val C2 = 0.000349066
+        private const val C3 = 0.000005236
+        private const val OBLIQUITY = 0.40927971
+        private val UTC_2000 = 946728000000L
         private val JANUARY_1_2000 = LocalDateTime.of(2000, Month.JANUARY, 1, 12, 0)
     }
 
