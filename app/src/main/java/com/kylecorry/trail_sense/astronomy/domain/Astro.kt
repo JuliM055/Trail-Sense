@@ -226,7 +226,7 @@ object Astro {
         standardAltitude: Double,
         declination: Double,
         rightAscension: Double
-    ): Triple<Double, Double, Double> {
+    ): NTuple5<Double, Double, Double, Boolean, Boolean> {
         val cosH =
             (sinDegrees(standardAltitude) - sinDegrees(latitude) * sinDegrees(declination)) / (cosDegrees(
                 latitude
@@ -234,10 +234,10 @@ object Astro {
 
         if (cosH >= 1) {
             // Always down
-            return Triple(-1.0, -1.0, -1.0)
+            return NTuple5(0.0, 0.0, 0.0, false, true)
         } else if (cosH <= -1) {
             // Always up
-            return Triple(-1.0, 0.0, -1.0)
+            return NTuple5(0.0, 0.0, 0.0, true, false)
         }
 
         val H = wrap(Math.toDegrees(acos(cosH)), 0.0, 180.0)
@@ -250,7 +250,7 @@ object Astro {
         val transitHour = m0 * 24
         val setHour = m2 * 24
 
-        return Triple(riseHour, transitHour, setHour)
+        return NTuple5(riseHour, transitHour, setHour, false, false)
     }
 
     fun accurateRiseSetTransitTimes(
@@ -347,11 +347,19 @@ object Astro {
         return Triple(riseHour, transitHour, setHour)
     }
 
-    fun getSunTimes(date: ZonedDateTime, coordinate: Coordinate, standardAltitude: Double = -0.8333): Triple<ZonedDateTime, ZonedDateTime, ZonedDateTime>? {
+    fun getSunTimes(date: ZonedDateTime, coordinate: Coordinate, standardAltitude: Double = -0.8333): TransitTimes {
         val ut = ut(date).toLocalDate().atStartOfDay()
         val sr = meanSiderealTime(julianDay(ut))
         val sun = solarCoordinates(julianDay(ut))
         val times = riseSetTransitTimes(coordinate.latitude, coordinate.longitude, sr, standardAltitude, sun.declination, sun.rightAscension)
+
+        if (times.fourth){
+            return TransitTimes(null, ZonedDateTime.now(), null)
+        }
+
+        if (times.fifth){
+            return TransitTimes(null, null, null)
+        }
 
         var rise = utToLocal(ut.plusHours(times.first), date.zone)
         var transit = utToLocal(ut.plusHours(times.second), date.zone)
@@ -375,7 +383,7 @@ object Astro {
             set = set.minusDays(1)
         }
 
-        return Triple(rise, transit, set)
+        return TransitTimes(rise, transit, set)
     }
 
     fun sunMeanAnomaly(julianDay: Double): Double {
@@ -504,3 +512,10 @@ object Astro {
 }
 
 data class AstroCoordinates(val declination: Double, val rightAscension: Double)
+
+data class TransitTimes(val rise: ZonedDateTime?, val transit: ZonedDateTime?, val set: ZonedDateTime?){
+    val alwaysUp = rise == null && set == null && transit != null
+    val alwaysDown = rise == null && set == null && transit == null
+}
+
+data class NTuple5<T1, T2, T3, T4, T5>(val first: T1, val second: T2, val third: T3, val fourth: T4, val fifth: T5)

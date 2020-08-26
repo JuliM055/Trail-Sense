@@ -244,7 +244,6 @@ class AstronomyFragment : Fragment() {
         // Rise / set times
         val sunTimes = astronomyService.getSunTimes(gps.location, sunTimesMode, displayDate)
         val moonTimes = astronomyService.getMoonTimes(gps.location, displayDate)
-        val solarNoon = astronomyService.getSolarNoon(gps.location, displayDate)
         val lunarNoon = astronomyService.getLunarNoon(gps.location, displayDate)
 
         val details = listOf(
@@ -252,13 +251,13 @@ class AstronomyFragment : Fragment() {
                 Pair(
                     Pair(R.drawable.sunrise, R.color.colorPrimary),
                     getSunriseWording()
-                ), sunTimes.up
+                ), sunTimes.rise?.toLocalDateTime()
             ),
             Pair(
                 Pair(
                     Pair(R.drawable.sunset, R.color.colorPrimary),
                     getSunsetWording()
-                ), sunTimes.down
+                ), sunTimes.set?.toLocalDateTime()
             ),
             // TODO: Get moon icons
             Pair(
@@ -272,7 +271,7 @@ class AstronomyFragment : Fragment() {
             // TODO: Get solar/lunar noon images
             Pair(
                 Pair(Pair(R.drawable.sun, R.color.colorPrimary), getString(R.string.solar_noon)),
-                solarNoon
+                sunTimes.transit?.toLocalDateTime()
             ),
             Pair(
                 Pair(Pair(R.drawable.moon_full, null), getString(R.string.lunar_noon)),

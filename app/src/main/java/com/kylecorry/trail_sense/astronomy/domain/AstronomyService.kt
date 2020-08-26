@@ -91,20 +91,20 @@ class AstronomyService(private val clock: Clock = Clock.systemDefaultZone()) {
 
     // PUBLIC SUN METHODS
 
-    fun getSunTimes(location: Coordinate, sunTimesMode: SunTimesMode, date: LocalDate): SunTimes {
+    fun getSunTimes(location: Coordinate, sunTimesMode: SunTimesMode, date: LocalDate): TransitTimes {
         return when (sunTimesMode) {
-            SunTimesMode.Actual -> ActualTwilightCalculator().calculate(location, date)
-            SunTimesMode.Civil -> CivilTwilightCalculator().calculate(location, date)
-            SunTimesMode.Nautical -> NauticalTwilightCalculator().calculate(location, date)
-            SunTimesMode.Astronomical -> AstronomicalTwilightCalculator().calculate(location, date)
+            SunTimesMode.Actual -> Astro.getSunTimes(date.atStartOfDay(ZoneId.systemDefault()), location, -0.8333)
+            SunTimesMode.Civil -> Astro.getSunTimes(date.atStartOfDay(ZoneId.systemDefault()), location, -6.0)
+            SunTimesMode.Nautical -> Astro.getSunTimes(date.atStartOfDay(ZoneId.systemDefault()), location, -12.0)
+            SunTimesMode.Astronomical -> Astro.getSunTimes(date.atStartOfDay(ZoneId.systemDefault()), location, -18.0)
         }
     }
 
-    fun getTodaySunTimes(location: Coordinate, sunTimesMode: SunTimesMode): SunTimes {
+    fun getTodaySunTimes(location: Coordinate, sunTimesMode: SunTimesMode): TransitTimes {
         return getSunTimes(location, sunTimesMode, LocalDate.now(clock))
     }
 
-    fun getTomorrowSunTimes(location: Coordinate, sunTimesMode: SunTimesMode): SunTimes {
+    fun getTomorrowSunTimes(location: Coordinate, sunTimesMode: SunTimesMode): TransitTimes {
         return getSunTimes(location, sunTimesMode, LocalDate.now(clock).plusDays(1))
     }
 
@@ -122,7 +122,7 @@ class AstronomyService(private val clock: Clock = Clock.systemDefaultZone()) {
         val tomorrow = getTomorrowSunTimes(location, sunTimesMode)
         return DateUtils.getClosestFutureTime(
             LocalDateTime.now(clock),
-            listOf(today.down, tomorrow.down)
+            listOf(today.set?.toLocalDateTime(), tomorrow.set?.toLocalDateTime())
         )
     }
 
@@ -131,7 +131,7 @@ class AstronomyService(private val clock: Clock = Clock.systemDefaultZone()) {
         val tomorrow = getTomorrowSunTimes(location, sunTimesMode)
         return DateUtils.getClosestFutureTime(
             LocalDateTime.now(clock),
-            listOf(today.up, tomorrow.up)
+            listOf(today.rise?.toLocalDateTime(), tomorrow.rise?.toLocalDateTime())
         )
     }
 

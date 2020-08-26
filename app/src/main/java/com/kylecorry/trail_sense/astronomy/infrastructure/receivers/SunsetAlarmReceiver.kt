@@ -86,9 +86,9 @@ class SunsetAlarmReceiver : BroadcastReceiver() {
         val now = LocalDateTime.now()
 
         val todaySunset =
-            astronomyService.getTodaySunTimes(gps.location, SunTimesMode.Actual).down
+            astronomyService.getTodaySunTimes(gps.location, SunTimesMode.Actual).set?.toLocalDateTime()
         val tomorrowSunset =
-            astronomyService.getTomorrowSunTimes(gps.location, SunTimesMode.Actual).down
+            astronomyService.getTomorrowSunTimes(gps.location, SunTimesMode.Actual).set?.toLocalDateTime()
 
 
         if (todaySunset != null) {
