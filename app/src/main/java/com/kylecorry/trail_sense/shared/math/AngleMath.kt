@@ -35,6 +35,10 @@ fun Double.toRadians(): Double {
     return Math.toRadians(this)
 }
 
+fun Double.toDegrees(): Double {
+    return Math.toDegrees(this)
+}
+
 fun deltaAngle(angle1: Float, angle2: Float): Float {
     var delta = angle2 - angle1
     delta += 180
